@@ -8,7 +8,8 @@
 
 #import "AppDelegate.h"
 #import "YJTabBarController.h"
-
+#import "YJNewViewController.h"
+#import "YJOAuthViewController.h"
 @interface AppDelegate ()
 
 @end
@@ -20,9 +21,25 @@
     self.window = [[UIWindow alloc]init];
     self.window.frame = [UIScreen mainScreen].bounds;
     
-    self.window.rootViewController = [[YJTabBarController alloc]init];
+    self.window.rootViewController = [[YJOAuthViewController alloc]init];
     
-    [self.window makeKeyAndVisible];
+//    // 上次版本
+//    NSString *lastVersion = [[NSUserDefaults standardUserDefaults]objectForKey:@"CFBundleVersion"];
+//
+//    // 当前版本从info.plst获得
+////  NSDictionary *info = [NSBundle mainBundle].infoDictionary;
+//    NSString *currentVersion = [NSBundle mainBundle].infoDictionary[@"CFBundleVersion"];
+//    
+//    if ([currentVersion isEqualToString:lastVersion]) { // 版本相同
+//        self.window.rootViewController = [[YJTabBarController alloc]init];
+//    }else{
+//        self.window.rootViewController = [[YJNewViewController alloc]init];
+//        // 将当前版本号存储到沙盒
+//        [[NSUserDefaults standardUserDefaults]setObject:currentVersion forKey:@"CFBundleVersion"];
+//        [[NSUserDefaults standardUserDefaults] synchronize];// 马上同步
+//    }
+    
+    [self.window makeKeyAndVisible];// 让窗口可见
     
     return YES;
 }

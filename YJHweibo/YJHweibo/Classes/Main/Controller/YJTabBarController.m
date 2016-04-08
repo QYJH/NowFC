@@ -38,7 +38,8 @@
 //    self.tabBar = [[YJTabBar alloc]init];
     YJTabBar *tabBar = [[YJTabBar alloc]init];
     tabBar.delegate = self;
-    [self setValue:tabBar forKeyPath:@"tabBar"];
+    // 这句话过后tabBar的 delegate 就是当前控制器,可以不设置tabBar.delegate = self;
+    [self setValue:tabBar forKeyPath:@"tabBar"]; // 相当于self.tabBar = tabBar;
 }
 
 // 有很多重复代码 ---> 讲重复代码抽取到一个方法中

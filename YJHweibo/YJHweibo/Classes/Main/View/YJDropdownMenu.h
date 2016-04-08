@@ -7,8 +7,17 @@
 //
 
 #import <UIKit/UIKit.h>
+@class YJDropdownMenu;
+@protocol YJDropdownMenuDeletege <NSObject>
+@optional
+- (void)dropdownMenuDidDismiss:(YJDropdownMenu *)menu;
+- (void)dropdownMenuDidshow:(YJDropdownMenu *)menu;
+@end
 
 @interface YJDropdownMenu : UIView
+
+@property(nonatomic,weak) id<YJDropdownMenuDeletege> deletege;
+
 +(instancetype) menu;
 // 显示
 -(void)showFrom:(UIView *)from;

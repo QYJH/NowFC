@@ -66,21 +66,6 @@
                     }
                 }
             }
-//    int count = self.subviews.count;
-//    for (int i = 0; i < count; i ++) {
-//        UIView *chlid = self.subviews[i];
-//        Class class = NSClassFromString(@"UITabBarButton");
-//        if ([chlid isKindOfClass:class]) {
-//            chlid.width = TabBarButtonW;
-//            chlid.x = TabBarButtonIndex * TabBarButtonW;
-//            
-//            // 增加索引
-//            TabBarButtonIndex ++;
-//            if (TabBarButtonIndex == 2) {
-//                TabBarButtonIndex ++;
-//            }
-//        }
-//    }
 }
 
 @end
