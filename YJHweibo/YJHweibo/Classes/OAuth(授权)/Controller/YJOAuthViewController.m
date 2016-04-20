@@ -12,7 +12,8 @@
 //  redirect_uri  http://baidu.com 回调地址配置-->默认是http://
 
 #import "YJOAuthViewController.h"
-#import "AFNetworking.h"
+#import "MBProgressHUD+MJ.h"
+#import "YJAccountTool.h"
 @interface YJOAuthViewController () <UIWebViewDelegate>
 
 @end
@@ -36,15 +37,19 @@
 #pragma mark WebViewDelegate
 -(void)webViewDidFinishLoad:(UIWebView *)webView
 {
-//    NSLog(@"ViewDidFinishLoad");
+    NSLog(@"ViewDidFinishLoad");
+    [MBProgressHUD hideHUD];
 }
 
 -(void)webViewDidStartLoad:(UIWebView *)webView
 {
-//    NSLog(@"ViewDidStartLoad");
-
+    NSLog(@"ViewDidStartLoad");
+    [MBProgressHUD showMessage:@"正在加载..."];
 }
-
+-(void)webView:(UIWebView *)webView didFailLoadWithError:(NSError *)error
+{
+    [MBProgressHUD hideHUD];
+}
 // 拦截数据
 -(BOOL)webView:(UIWebView *)webView shouldStartLoadWithRequest:(NSURLRequest *)request navigationType:(UIWebViewNavigationType)navigationType
 {
@@ -59,6 +64,9 @@
         
         // 利用 code 获取 accessToke
         [self accessTokeWith:code];
+        
+        // 禁止加载回调地址
+        return NO;
     }
     
 //    NSLog(@"shouldStartLoadWithRequest -- %@",request.URL.absoluteString);
@@ -77,17 +85,23 @@
     ditc[@"code"] = code;
     
     AFHTTPRequestOperationManager *mager = [AFHTTPRequestOperationManager manager];
-//    manager.requestSerializer = [AFJSONRequestSerializer serializer]; // 请求数据类型
-//    mager.responseSerializer = [AFHTTPResponseSerializer serializer]; // 返回数据类型
-    [mager POST:url parameters:ditc success:^(AFHTTPRequestOperation *operation, id responseObject) {
+    [mager POST:url parameters:ditc success:^(AFHTTPRequestOperation *operation,  NSDictionary *responseObject) {
         NSLog(@"responseObject =%@",responseObject);
+        [MBProgressHUD hideHUD];
+
+        // 将返回账号的字典数据--->转成模型 --->再存进沙盒
+        YJAccount *account = [YJAccount accountWithDict:responseObject];
+        // 存储账号信息到沙盒
+        [YJAccountTool saveAccount:account];
+#pragma mark 切换窗口根控制器
+        UIWindow *window = [UIApplication sharedApplication].keyWindow;
+        [window switchRootViewController];
+        
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
         NSLog(@"error =%@",error);
+        [MBProgressHUD hideHUD];
     }];
 }
-
-
-
 
 
 @end

@@ -98,7 +98,7 @@
 
 -(void)dealloc
 {
-    NSLog(@"YJNewViewController");
+    NSLog(@"dealloc ------   YJNewViewController");
 }
 
 -(void)shareClick:(UIButton *)shareBtn{

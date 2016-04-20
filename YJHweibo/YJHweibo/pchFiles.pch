@@ -12,18 +12,45 @@
 // Include any system framework and library headers here that should be included in all compilation units.
 // You will also need to set the Prefix Header build setting of one or more of your targets to reference this file.
 
+#import <UIKit/UIKit.h>
+#import <Foundation/Foundation.h>
 #import "UIView+Extension.h"
 #import "UIBarButtonItem+Extension.h"
+#import "UIWindow+Extension.h"
+#import "Masonry.h"
+#import "AFNetworking.h"
+#import "YJAccountTool.h"
+#import "UIImage+Extension.h"
+#import "NSString+Emoji.h"
+#import "NSString+Extension.h"
+#import "UITextView+Extension.h"
 
-#ifdef DEBUE
+#ifdef DEBUG // 处于开发阶段
 #define YJLog(...) NSLog(__VA_ARGS__)
-#else
+#else  // 处于发布阶段
 #define YJLog(...)
 #endif
 
-
+// RGB颜色
 #define YJColor(r, g, b) [UIColor colorWithRed:(r)/255.0 green:(g)/255.0 blue:(b)/255.0 alpha:1.0]
-#define YJRandomColor [UIColor colorWithRed:arc4random_uniform(256)/255.0 green:arc4random_uniform(256)/255.0 blue:arc4random_uniform(256)/255.0 alpha:1.0] // 随机色
-#define YJgrayColor [UIColor colorWithRed:123/255.0 green:123/255.0 blue:123/255.0 alpha:1.0] // 灰色
+// 随机色
+#define YJRandomColor [UIColor colorWithRed:arc4random_uniform(256)/255.0 green:arc4random_uniform(256)/255.0 blue:arc4random_uniform(256)/255.0 alpha:0.5]
+// 灰色
+#define YJgrayColor [UIColor colorWithRed:188/255.0 green:188/255.0 blue:188/255.0 alpha:0.3]
 
+// 是否为iOS7
+#define iOS7 ([[UIDevice currentDevice].systemVersion doubleValue] >= 7.0)
+
+// 是否为4inch
+#define FourInch ([UIScreen mainScreen].bounds.size.height == 568.0)
+
+// 导航栏标题的字体
+#define HMNavigationTitleFont [UIFont boldSystemFontOfSize:20]
+
+// 通知
+// 表情选中的通知
+#define YJEmotionDidSelectNotification @"YJEmotionDidSelectNotification"
+#define YJSelectEmotionKey @"YJSelectEmotionKey"
+// 删除文字的通知
+#define YJEmotionDidDeleteNotification @"YJEmotionDidDeleteNotification"
 #endif /* pchFiles_pch */

@@ -13,6 +13,7 @@
 #import "YJProfileViewController.h"
 #import "YJNavigationController.h"
 #import "YJTabBar.h"
+#import "YJComposeController.h"
 @interface YJTabBarController ()<YJTabBarDelegate>
 
 @end
@@ -21,6 +22,7 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+    
    // 1.初始化控制器
     YJHomeViewController *home = [[YJHomeViewController alloc]init];
     [self addChildVC:home title:@"首页" image:@"tabbar_home" selectedimage:@"tabbar_home_selected"];
@@ -77,10 +79,11 @@
 #pragma mark YJTabBarDelegate代理方法
 -(void)tabBarDidClickPlusButton:(YJTabBar *)tabBar
 {
-    UIViewController *vc = [[UIViewController alloc]init];
-    vc.view.backgroundColor = [UIColor grayColor];
-    [self presentViewController:vc animated:YES completion:^{
-    }];
+    YJComposeController *vc = [YJComposeController Compose];
+    YJNavigationController *nav = [[YJNavigationController alloc]initWithRootViewController:vc];
     
+    [self presentViewController:nav animated:YES completion:nil];
+    
+//    [self.navigationController pushViewController:vc animated:YES];
 }
 @end

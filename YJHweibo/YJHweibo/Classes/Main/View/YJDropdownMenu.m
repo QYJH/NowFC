@@ -17,8 +17,6 @@
     if (!_containerView) {
         UIImageView *containerView = [[UIImageView alloc]init];
         containerView.image = [UIImage imageNamed:@"popover_background"];
-//        containerView.width = 217;
-//        containerView.height = 217;
         containerView.userInteractionEnabled = YES;
         [self addSubview:containerView];
         self.containerView = containerView;

@@ -6,10 +6,11 @@
 //  Copyright © 2016年 YJH. All rights reserved.
 //
 
-#import "AppDelegate.h"
-#import "YJTabBarController.h"
-#import "YJNewViewController.h"
+#import "AppDelegate.h" 
 #import "YJOAuthViewController.h"
+#import "YJAccount.h"
+#import "YJAccountTool.h"
+#import "SDWebImageManager.h"
 @interface AppDelegate ()
 
 @end
@@ -18,29 +19,20 @@
 
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
-    self.window = [[UIWindow alloc]init];
+    // 1.创建窗口
+    self.window = [[UIWindow alloc] init];
     self.window.frame = [UIScreen mainScreen].bounds;
     
-    self.window.rootViewController = [[YJOAuthViewController alloc]init];
+    // 2.设置根控制器
+    YJAccount *account = [YJAccountTool account];
+    if (account) { // 之前已经登录成功过
+        [self.window switchRootViewController];
+    } else {
+        self.window.rootViewController = [[YJOAuthViewController alloc] init];
+    }
     
-//    // 上次版本
-//    NSString *lastVersion = [[NSUserDefaults standardUserDefaults]objectForKey:@"CFBundleVersion"];
-//
-//    // 当前版本从info.plst获得
-////  NSDictionary *info = [NSBundle mainBundle].infoDictionary;
-//    NSString *currentVersion = [NSBundle mainBundle].infoDictionary[@"CFBundleVersion"];
-//    
-//    if ([currentVersion isEqualToString:lastVersion]) { // 版本相同
-//        self.window.rootViewController = [[YJTabBarController alloc]init];
-//    }else{
-//        self.window.rootViewController = [[YJNewViewController alloc]init];
-//        // 将当前版本号存储到沙盒
-//        [[NSUserDefaults standardUserDefaults]setObject:currentVersion forKey:@"CFBundleVersion"];
-//        [[NSUserDefaults standardUserDefaults] synchronize];// 马上同步
-//    }
-    
-    [self.window makeKeyAndVisible];// 让窗口可见
-    
+    // 3.显示窗口
+    [self.window makeKeyAndVisible];
     return YES;
 }
 
@@ -51,8 +43,13 @@
 }
 
 - (void)applicationDidEnterBackground:(UIApplication *)application {
-    // Use this method to release shared resources, save user data, invalidate timers, and store enough application state information to restore your application to its current state in case it is terminated later.
-    // If your application supports background execution, this method is called instead of applicationWillTerminate: when the user quits.
+    __block UIBackgroundTaskIdentifier task = [application beginBackgroundTaskWithExpirationHandler:^{
+        // 当申请的后台运行时间已经结束（过期），就会调用这个block
+        
+        // 赶紧结束任务
+        [application endBackgroundTask:task];
+    }];
+    
 }
 
 - (void)applicationWillEnterForeground:(UIApplication *)application {
@@ -65,6 +62,17 @@
 
 - (void)applicationWillTerminate:(UIApplication *)application {
     // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
+}
+
+-(void)applicationDidReceiveMemoryWarning:(UIApplication *)application{
+    NSLog(@"程序接收到内存警告");
+    //接收到内存警告，释放一些不必要的资源
+    
+    // 1. 取消下载
+    SDWebImageManager *mgr = [SDWebImageManager sharedManager];
+    [mgr cancelAll];
+    // 2. 清楚内存中的所有图片
+    [mgr.imageCache clearMemory];
 }
 
 @end
