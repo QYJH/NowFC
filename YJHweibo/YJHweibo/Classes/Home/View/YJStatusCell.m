@@ -15,6 +15,7 @@
 #import "YJStatusToolbar.h"
 #import "YJStatusPhotosView.h"
 #import "YJIconView.h"
+#import "YJStatusTextView.h"
 
 @interface YJStatusCell()
 /** 原创微博整体 */
@@ -32,13 +33,13 @@
 /** 来源*/
 @property(nonatomic,weak) UILabel *sourceLabel;
 /** 正文*/
-@property(nonatomic,weak) UILabel *contentLabel;
+@property(nonatomic,weak) YJStatusTextView *contentLabel;
 
 /* 转发微博 */
 /** 转发微博整体 */
 @property (nonatomic, weak) UIView *retweetView;
 /** 转发微博正文 + 昵称 */
-@property (nonatomic, weak) UILabel *retweetContentLabel;
+@property (nonatomic, weak) YJStatusTextView *retweetContentLabel;
 /** 转发配图 */
 @property (nonatomic, weak) YJStatusPhotosView *retweetPhotosView;
 
@@ -120,8 +121,7 @@
     self.retweetView = retweetView;
     
     /** 转发微博正文 + 昵称 */
-    UILabel *retweetContentLabel = [[UILabel alloc] init];
-    retweetContentLabel.numberOfLines = 0;
+    YJStatusTextView *retweetContentLabel = [[YJStatusTextView alloc] init];
     retweetContentLabel.font = YJStatusCellRetweetContentFont;
     [retweetView addSubview:retweetContentLabel];
     self.retweetContentLabel = retweetContentLabel;
@@ -181,9 +181,8 @@
     self.sourceLabel = sourceLabel;
     
     /** 正文*/
-    UILabel *contentLabel = [[UILabel alloc]init];
+    YJStatusTextView *contentLabel = [[YJStatusTextView alloc]init];
     contentLabel.font = YJStatusCellContentFont;
-    contentLabel.numberOfLines = 0;
     [self.originaview addSubview:contentLabel];
     self.contentLabel = contentLabel;
 }
@@ -247,23 +246,23 @@
     self.sourceLabel.frame = (CGRect){{sourceX, sourceY}, sourceSize};
     self.sourceLabel.text = status.source;
     
-    /** 正文*/
-    self.contentLabel.text = status.text;
+    /** 正文 */
+    self.contentLabel.attributedText = status.attributedText;
     self.contentLabel.frame = StatusFrame.contentLabelF;
     
     
     /** 被转发的微博 */
     if (status.retweeted_status) {
         YJStatus *retweeted_status = status.retweeted_status;
-        YJUser *retweeted_status_user = retweeted_status.user;
+//        YJUser *retweeted_status_user = retweeted_status.user;
         
         self.retweetView.hidden = NO;
         /** 被转发的微博整体 */
         self.retweetView.frame = StatusFrame.retweetViewF;
         
         /** 被转发的微博正文 */
-        NSString *retweetContent = [NSString stringWithFormat:@"@%@ : %@", retweeted_status_user.name, retweeted_status.text];
-        self.retweetContentLabel.text = retweetContent;
+//        NSString *retweetContent = [NSString stringWithFormat:@"@%@ : %@", retweeted_status_user.name, retweeted_status.text];
+        self.retweetContentLabel.attributedText = status.retweetedAttributedText;
         self.retweetContentLabel.frame = StatusFrame.retweetContentLabelF;
         
         /** 被转发的微博配图 */

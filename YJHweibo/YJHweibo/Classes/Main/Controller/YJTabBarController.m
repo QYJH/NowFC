@@ -14,18 +14,21 @@
 #import "YJNavigationController.h"
 #import "YJTabBar.h"
 #import "YJComposeController.h"
-@interface YJTabBarController ()<YJTabBarDelegate>
-
+@interface YJTabBarController ()<YJTabBarDelegate,UITabBarControllerDelegate>
+@property (nonatomic, weak) YJHomeViewController *home;
+@property (nonatomic, weak) UIViewController *lastSelectedViewContoller;
 @end
 
 @implementation YJTabBarController
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    
+    self.delegate = self;
    // 1.初始化控制器
     YJHomeViewController *home = [[YJHomeViewController alloc]init];
     [self addChildVC:home title:@"首页" image:@"tabbar_home" selectedimage:@"tabbar_home_selected"];
+    self.home = home;
+    self.lastSelectedViewContoller = home;
     
     YJMessageViewController *Message = [[YJMessageViewController alloc]init];
     [self addChildVC:Message title:@"消息" image:@"tabbar_message_center" selectedimage:@"tabbar_message_center_selected"];
@@ -85,5 +88,20 @@
     [self presentViewController:nav animated:YES completion:nil];
     
 //    [self.navigationController pushViewController:vc animated:YES];
+}
+
+#pragma mark UITabBarControllerDelegate,监听点击
+- (void)tabBarController:(UITabBarController *)tabBarController didSelectViewController:(UINavigationController *)viewController
+{
+    UIViewController *vc = [viewController.viewControllers firstObject];
+    if ([vc isKindOfClass:[YJHomeViewController class]]) {
+        if (self.lastSelectedViewContoller == vc) {
+            [self.home refresh:YES];
+        } else {
+            [self.home refresh:NO];
+        }
+    }
+    
+    self.lastSelectedViewContoller = vc;
 }
 @end

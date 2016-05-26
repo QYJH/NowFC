@@ -5,7 +5,7 @@
 //  Created by YJH on 16/3/23.
 //  Copyright © 2016年 YJH. All rights reserved.
 
-#import "YJHomeViewController.h"
+#import "YJHomeViewController.h" 
 #import "YJDropdownMenu.h"
 #import "YJTitleMenuViewController.h"
 #import "YJAccountTool.h"
@@ -18,6 +18,7 @@
 #import "YJStatusCell.h"
 #import "YJStatusFrame.h"
 #import "YJHttpTool.h"
+#import "MJRefresh.h"
 #import "YJStatusTool.h"
 
 @interface YJHomeViewController () <YJDropdownMenuDeletege>
@@ -48,7 +49,7 @@
     [self setupUserInfo];
     
     // 加载最新微博数据
-//    [self loadNewStatus];
+//    [self loadNewStatus2];
     
     // 集成下拉刷新控件
     [self setupDownRefresh];
@@ -60,11 +61,8 @@
    NSTimer *timer = [NSTimer scheduledTimerWithTimeInterval:60 target:self selector:@selector(setuoUnreadCount) userInfo:nil repeats:YES];
     
     [[NSRunLoop mainRunLoop] addTimer:timer forMode:NSRunLoopCommonModes];
-    
-    // 打印沙盒路径
-//    NSArray * paths =NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
-//    NSLog(@"沙盒路径:%@",paths);
 }
+
 // 定时获取未读数量
 -(void)setuoUnreadCount
 {
@@ -95,29 +93,37 @@
 
 // 集成上拉刷新控件
 -(void)setupUpRefresh{
-    YJLoadFooterView *footer = [YJLoadFooterView footer];
-    // 隐藏footer
-    footer.hidden = YES;
-    self.tableView.tableFooterView = footer;
+//    YJLoadFooterView *footer = [YJLoadFooterView footer];
+//    // 隐藏footer
+//    footer.hidden = YES;
+//    self.tableView.tableFooterView = footer;
+    
+    [self.tableView addFooterWithTarget:self action:@selector(loadMoreStatus)];
+
 }
 
 // 集成下拉刷新控件
 -(void)setupDownRefresh{
-    // 1. 添加刷新控件
-    UIRefreshControl *control = [[UIRefreshControl alloc]init];
-    [control addTarget:self action:@selector(loadNewStatus:) forControlEvents:UIControlEventValueChanged];
-    [self.tableView addSubview:control];
+//    // 1. 添加刷新控件
+//    UIRefreshControl *control = [[UIRefreshControl alloc]init];
+//    [control addTarget:self action:@selector(loadNewStatus:) forControlEvents:UIControlEventValueChanged];
+//    [self.tableView addSubview:control];
+//    
+//    // 2. 马上进入刷新状态(仅仅是显示刷新状态,并不会调用刷新事件)
+//    [control beginRefreshing];
+//    
+//    // 3.马上加载数据
+//    [self loadNewStatus:control];
     
-    // 2. 马上进入刷新状态(仅仅是显示刷新状态,并不会调用刷新事件)
-    [control beginRefreshing];
+    // 1.添加刷新控件
+    [self.tableView addHeaderWithTarget:self action:@selector(loadNewStatus)];
     
-    // 3.马上加载数据
-    [self loadNewStatus:control];
+    // 2.进入刷新状态
+    [self.tableView headerBeginRefreshing];
 }
 
 #pragma mark 刷新控件触发事件 下拉刷新
--(void)loadNewStatus:(UIRefreshControl *)control{
-
+-(void)loadNewStatus{
     YJAccount *account = [YJAccountTool account];
     NSString *url = @"https://api.weibo.com/2/statuses/friends_timeline.json";
     NSMutableDictionary *params= [NSMutableDictionary dictionary];
@@ -129,32 +135,46 @@
 //  若指定此参数，则返回ID比since_id大的微博（即比since_id时间晚的微博），默认为0。
     params[@"since_id"] = firstStatusF.status.idstr;
 }
-
-    AFHTTPRequestOperationManager *mager = [AFHTTPRequestOperationManager manager];
-    [mager GET:url parameters:params success:^(AFHTTPRequestOperation *operation, NSDictionary *responseObject) {
-        YJLog(@"responseObject =%@",responseObject);
-        // 将 "微博字典"数组 转为 "微博模型"数组
-        NSArray *newStatuses = [YJStatus objectArrayWithKeyValuesArray:responseObject[@"statuses"]];
-        
-        // 将YJStatus数组 转为 statusFramees数组
-        NSArray *newFrames = [self stausFramesWithStatuses:newStatuses];
-        
-        // 将最新数据数组加到-->总数组最前面
-        NSRange range = NSMakeRange(0, newFrames.count);
-        NSIndexSet *set = [NSIndexSet indexSetWithIndexesInRange:range];
-        [self.statusFrames insertObjects:newFrames atIndexes:set];
-        // 刷新表格
-        [self.tableView reloadData];
-        // 结束刷新
-        [control endRefreshing];
-        // 显示加载到最新微博数量
-        [self showNewStatusCount:newStatuses.count];
-        
-    } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-        YJLog(@"error =%@",error);
-        // 结束刷新
-        [control endRefreshing];
-    }];
+    // 1. 定义一个block处理返回的字典数据
+    void (^dealingResult)(NSArray *) = ^(NSArray *statuses){
+    // 将 "微博字典"数组 转为 "微博模型"数组
+    NSArray *newStatuses = [YJStatus objectArrayWithKeyValuesArray:statuses];
+    
+    // 将YJStatus数组 转为 statusFramees数组
+    NSArray *newFrames = [self stausFramesWithStatuses:newStatuses];
+    
+    // 将最新数据数组加到-->总数组最前面
+    NSRange range = NSMakeRange(0, newFrames.count);
+    NSIndexSet *set = [NSIndexSet indexSetWithIndexesInRange:range];
+    [self.statusFrames insertObjects:newFrames atIndexes:set];
+    // 刷新表格
+    [self.tableView reloadData];
+    // 结束刷新
+    //        [control endRefreshing];
+    [self.tableView headerEndRefreshing];
+    // 显示加载到最新微博数量
+    [self showNewStatusCount:newStatuses.count];
+ };
+    
+    //  2. 先尝试从数据库中加载微博数据
+    NSArray *statuses = [YJStatusTool statusesWithParams:params];
+    if (statuses.count) {
+        dealingResult(statuses);
+    }else{
+   //   3. 发送请求
+        [YJHttpTool get:url params:params success:^(id json) {
+            YJLog(@"responseObject =%@",json);
+            
+            [YJStatusTool saveStatuses:json[@"statuses"]];
+            // 刷新数据
+            dealingResult(json[@"statuses"]);
+        } failure:^(NSError *error) {
+            YJLog(@"error =%@",error);
+            
+            // 结束刷新
+            [self.tableView headerEndRefreshing];
+        }];
+  }
 }
 #pragma mark 显示加载到最新微博数量
 -(void)showNewStatusCount:(NSUInteger)count
@@ -192,7 +212,7 @@
 }
 
 #pragma mark 加载最新微博数据
--(void)loadNewStatus{
+-(void)loadNewStatus2{
     YJAccount *account = [YJAccountTool account];
     NSString *url = @"https://api.weibo.com/2/statuses/friends_timeline.json";
     NSMutableDictionary *params= [NSMutableDictionary dictionary];
@@ -246,9 +266,9 @@
         params[@"access_token"] = account.access_token;
         params[@"uid"] = account.uid;
         
-    [YJHttpTool get:url params:params success:^(id responseObject){
+    [YJHttpTool get:url params:params success:^(id json){
                 
-        YJUser *user = [YJUser objectWithKeyValues:responseObject];
+        YJUser *user = [YJUser objectWithKeyValues:json];
         NSLog(@"%@",user);
         // 标题按钮
         UIButton *titleButton = (UIButton *)self.navigationItem.titleView;
@@ -341,41 +361,37 @@
     return frame.cellHeight;
 }
 
-- (void)scrollViewDidScroll:(UIScrollView *)scrollView
-{
-    // scrollView == self.tableView == self.view
-    // 如果tableView还没有数据，就直接返回
-    if (self.statusFrames.count == 0 || self.tableView.tableFooterView.isHidden == NO) return;
-    
-    CGFloat offsetY = scrollView.contentOffset.y;
-    
-    // 当最后一个cell完全显示在眼前时，contentOffset的y值
-    CGFloat judgeOffsetY = scrollView.contentSize.height + scrollView.contentInset.bottom - scrollView.height - self.tableView.tableFooterView.height;
-    if (offsetY >= judgeOffsetY) { // 最后一个cell完全进入视野范围内
-        // 显示footer
-        self.tableView.tableFooterView.hidden = NO;
-        
-        // 加载更多的微博数据
-        [self loadMoreStatus];
-    }
-    /*
-     contentInset：除具体内容以外的边框尺寸
-     contentSize: 里面的具体内容（header、cell、footer），除掉contentInset以外的尺寸
-     contentOffset:
-     1.它可以用来判断scrollView滚动到什么位置
-     2.指scrollView的内容超出了scrollView顶部的距离（除掉contentInset以外的尺寸）
-     */
-}
+//- (void)scrollViewDidScroll:(UIScrollView *)scrollView
+//{
+//    // scrollView == self.tableView == self.view
+//    // 如果tableView还没有数据，就直接返回
+//    if (self.statusFrames.count == 0 || self.tableView.tableFooterView.isHidden == NO) return;
+//    
+//    CGFloat offsetY = scrollView.contentOffset.y;
+//    
+//    // 当最后一个cell完全显示在眼前时，contentOffset的y值
+//    CGFloat judgeOffsetY = scrollView.contentSize.height + scrollView.contentInset.bottom - scrollView.height - self.tableView.tableFooterView.height;
+//    if (offsetY >= judgeOffsetY) { // 最后一个cell完全进入视野范围内
+//        // 显示footer
+//        self.tableView.tableFooterView.hidden = NO;
+//        
+//        // 加载更多的微博数据
+//        [self loadMoreStatus];
+//    }
+//    /*
+//     contentInset：除具体内容以外的边框尺寸
+//     contentSize: 里面的具体内容（header、cell、footer），除掉contentInset以外的尺寸
+//     contentOffset:
+//     1.它可以用来判断scrollView滚动到什么位置
+//     2.指scrollView的内容超出了scrollView顶部的距离（除掉contentInset以外的尺寸）
+//     */
+//}
 
 /**
  *  加载更多的微博数据
  */
 -(void)loadMoreStatus{
-
-    // 1.请求管理者
-    AFHTTPRequestOperationManager *mgr = [AFHTTPRequestOperationManager manager];
-    
-    // 2.拼接请求参数
+    // 拼接请求参数
     YJAccount *account = [YJAccountTool account];
     NSMutableDictionary *params = [NSMutableDictionary dictionary];
     params[@"access_token"] = account.access_token;
@@ -388,11 +404,10 @@
         long long maxId = lastStatusF.status.idstr.longLongValue - 1;
         params[@"max_id"] = @(maxId);
     }
-    
-    // 3.发送请求
-    [mgr GET:@"https://api.weibo.com/2/statuses/friends_timeline.json" parameters:params success:^(AFHTTPRequestOperation *operation, NSDictionary *responseObject) {
+    // 处理字典数据
+    void (^dealingResult)(NSArray *) = ^(NSArray *statuses) {
         // 将 "微博字典"数组 转为 "微博模型"数组
-        NSArray *newStatuses = [YJStatus objectArrayWithKeyValuesArray:responseObject[@"statuses"]];
+        NSArray *newStatuses = [YJStatus objectArrayWithKeyValuesArray:statuses];
         // 将 YJStatus数组 转为 YJStatusFrame数组
         NSArray *newFrames = [self stausFramesWithStatuses:newStatuses];
         
@@ -403,12 +418,19 @@
         [self.tableView reloadData];
         
         // 结束刷新(隐藏footer)
-        self.tableView.tableFooterView.hidden = YES;
-    } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+        [self.tableView footerEndRefreshing];
+    };
+    // 3.发送请求
+    [YJHttpTool get:@"https://api.weibo.com/2/statuses/friends_timeline.json" params:params success:^(id json) {
+        // 缓存新浪返回的字典数组
+        [YJStatusTool saveStatuses:json[@"statuses"]];
+        // 刷新数据
+        dealingResult(json[@"statuses"]);
+    } failure:^(NSError *error) {
         YJLog(@"请求失败-%@", error);
         
-        // 结束刷新
-        self.tableView.tableFooterView.hidden = YES;
+        // 结束刷新(隐藏footer)
+        [self.tableView footerEndRefreshing];
     }];
 }
 
@@ -422,5 +444,20 @@
         [frames addObject:Frame];
     }
     return frames;
+}
+
+#pragma mark - 刷新
+- (void)refresh:(BOOL)fromSelf
+{
+    if (self.tabBarItem.badgeValue) { // 有数字
+        //进入刷新状态
+        [self.tableView headerBeginRefreshing];
+        
+        [self loadNewStatus];
+    }else if (fromSelf){ // 没有数字
+        // 让表格回到最顶部
+        NSIndexPath *firstRow = [NSIndexPath indexPathForRow:0 inSection:0];
+        [self.tableView scrollToRowAtIndexPath:firstRow atScrollPosition:UITableViewScrollPositionTop animated:YES];
+    }
 }
 @end

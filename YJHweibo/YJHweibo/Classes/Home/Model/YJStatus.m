@@ -9,6 +9,12 @@
 #import "YJStatus.h"
 #import "YJPhoto.h"
 #import "MJExtension.h"
+#import "RegexKitLite.h"
+#import "YJTextPart.h"
+#import "YJEmotionTool.h"
+#import "YJUser.h"
+#import "YJEmotion.h"
+#import "YJSpecial.h"
 @implementation YJStatus
 
 - (NSDictionary *)objectClassInArray
@@ -17,6 +23,130 @@
     return @{@"pic_urls" : [YJPhoto class]};
 }
 
+
+/**
+ *  普通文字 -转-> 属性文字
+ *
+ *  @param text 普通文字
+ *
+ *  @return 属性文字
+ */
+- (NSAttributedString *)attributedTextWithText:(NSString *)text
+{
+    NSMutableAttributedString *attributedText = [[NSMutableAttributedString alloc] init];
+    
+    // 表情的规则
+    NSString *emotionPattern = @"\\[[0-9a-zA-Z\\u4e00-\\u9fa5]+\\]";
+    // @的规则
+    NSString *atPattern = @"@[0-9a-zA-Z\\u4e00-\\u9fa5-_]+";
+    // #话题#的规则
+    NSString *topicPattern = @"#[0-9a-zA-Z\\u4e00-\\u9fa5]+#";
+    // url链接的规则
+    NSString *urlPattern = @"\\b(([\\w-]+://?|www[.])[^\\s()<>]+(?:\\([\\w\\d]+\\)|([^[:punct:]\\s]|/)))";
+    NSString *pattern = [NSString stringWithFormat:@"%@|%@|%@|%@", emotionPattern, atPattern, topicPattern, urlPattern];
+    
+    // (根据正则表达式规则)遍历所有的特殊字符串
+    NSMutableArray *parts = [NSMutableArray array];
+    [text enumerateStringsMatchedByRegex:pattern usingBlock:^(NSInteger captureCount, NSString *const __unsafe_unretained *capturedStrings, const NSRange *capturedRanges, volatile BOOL *const stop) {
+        if ((*capturedRanges).length == 0) return;
+        
+        YJTextPart *part = [[YJTextPart alloc] init];
+        part.special = YES;
+        part.text = *capturedStrings;
+        part.emotion = [part.text hasPrefix:@"["] && [part.text hasSuffix:@"]"];
+        part.range = *capturedRanges;
+        [parts addObject:part];
+    }];
+    
+    // 遍历所有的非特殊字符
+    [text enumerateStringsSeparatedByRegex:pattern usingBlock:^(NSInteger captureCount, NSString *const __unsafe_unretained *capturedStrings, const NSRange *capturedRanges, volatile BOOL *const stop) {
+        if ((*capturedRanges).length == 0) return;
+        
+        YJTextPart *part = [[YJTextPart alloc] init];
+        part.text = *capturedStrings;
+        part.range = *capturedRanges;
+        [parts addObject:part];
+    }];
+    
+    // 排序
+    // 系统是按照从小 -> 大的顺序排列对象
+    [parts sortUsingComparator:^NSComparisonResult(YJTextPart *part1, YJTextPart *part2) {
+        // NSOrderedAscending = -1L, NSOrderedSame, NSOrderedDescending
+        // 返回NSOrderedSame:两个一样大
+        // NSOrderedAscending(升序):part2 > part1
+        // NSOrderedDescending(降序):part1 > part2
+        if (part1.range.location > part2.range.location) {
+            // part1 > part2
+            // part1放后面, part2放前面
+            return NSOrderedDescending;
+        }
+        // part1 < part2
+        // part1放前面, part2放后面
+        return NSOrderedAscending;
+    }];
+    
+    UIFont *font = [UIFont systemFontOfSize:15];
+    NSMutableArray *specials = [NSMutableArray array];
+    // 按顺序拼接每一段文字
+    for (YJTextPart *part in parts) {
+        // 等会需要拼接的子串
+        NSAttributedString *substr = nil;
+        if (part.isEmotion) { // 表情
+            NSTextAttachment *attch = [[NSTextAttachment alloc] init];
+            NSString *name = [YJEmotionTool emotionWithChs:part.text].png;
+            if (name) { // 能找到对应的图片
+                attch.image = [UIImage imageNamed:name];
+                attch.bounds = CGRectMake(0, -3, font.lineHeight, font.lineHeight);
+                substr = [NSAttributedString attributedStringWithAttachment:attch];
+            } else { // 表情图片不存在
+                substr = [[NSAttributedString alloc] initWithString:part.text];
+            }
+        } else if (part.special) { // 非表情的特殊文字
+            substr = [[NSAttributedString alloc] initWithString:part.text attributes:@{
+                                                                                       NSForegroundColorAttributeName : [UIColor redColor]
+                                                                                       }];
+            // 创建特殊对象
+            YJSpecial *s = [[YJSpecial alloc] init];
+            s.text = part.text;
+            NSUInteger loc = attributedText.length;
+            NSUInteger len = part.text.length;
+            YJLog(@"loc= %zd len=%zd",loc,len);
+            s.range = NSMakeRange(loc, len);
+            [specials addObject:s];
+            
+        } else { // 非特殊文字
+            substr = [[NSAttributedString alloc] initWithString:part.text];
+        }
+        [attributedText appendAttributedString:substr];
+    }
+    YJLog(@"%@",specials);
+    
+    
+    // 一定要设置字体,保证计算出来的尺寸是正确的
+    [attributedText addAttribute:NSFontAttributeName value:font range:NSMakeRange(0, attributedText.length)];
+    // 将数组通过key 绑定到 attributedText身上
+    [attributedText addAttribute:@"specials" value:specials range:NSMakeRange(0, 1)];
+    
+    return attributedText;
+}
+
+
+// 原微博信息内容
+- (void)setText:(NSString *)text
+{
+    _text = [text copy];
+    
+    // 利用text生成attributedText
+    self.attributedText = [self attributedTextWithText:text];
+}
+// 被转发的原微博信息字段
+- (void)setRetweeted_status:(YJStatus *)retweeted_status
+{
+    _retweeted_status = retweeted_status;
+    
+    NSString *retweetContent = [NSString stringWithFormat:@"@%@ : %@", retweeted_status.user.name, retweeted_status.text];
+    self.retweetedAttributedText = [self attributedTextWithText:retweetContent];
+}
 
 - (NSString *)created_at
 {
@@ -120,15 +250,19 @@
     return [dateStr isEqualToString:nowStr];
 }
 
-//- (void)setSource:(NSString *)source
-//{
-//    // 截串 NSString
-//    NSRange range;
-//    range.location = [source rangeOfString:@">"].location + 1;
-//    range.length = [source rangeOfString:@"</"].location - range.location;
-//    _source = [NSString stringWithFormat:@"来自%@", [source substringWithRange:range]];
-//    NSLog(@"source= %@",_source);
-//}
+- (void)setSource:(NSString *)source
+{
+    // 截串 NSString
+    if (source.length) {
+        NSRange range;
+        range.location = [source rangeOfString:@">"].location + 1;
+        range.length = [source rangeOfString:@"</"].location - range.location;
+        _source = [NSString stringWithFormat:@"来自%@", [source substringWithRange:range]];
+        NSLog(@"source= %@",_source);
+    }else{
+     _source = @"来自新浪微博";
+    }
+}
 
 //+(instancetype)statusWintDict:(NSDictionary *)dict
 //{

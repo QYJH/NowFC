@@ -39,9 +39,7 @@
 {
     if (!_defaultListView) {
         self.defaultListView = [[YJEmotionListView alloc] init];
-        NSString *path = [[NSBundle mainBundle] pathForResource:@"EmotionIcons/default/info.plist" ofType:nil];
-        // 将字典数组转换为模型数组
-        self.defaultListView.emotions = [YJEmotion objectArrayWithKeyValuesArray:[NSArray arrayWithContentsOfFile:path]];
+        self.defaultListView.emotions = [YJEmotionTool defaultEmotions];
     }
     return _defaultListView;
 }
@@ -50,9 +48,7 @@
 {
     if (!_emojiListView) {
         self.emojiListView = [[YJEmotionListView alloc] init];
-        NSString *path = [[NSBundle mainBundle] pathForResource:@"EmotionIcons/emoji/info.plist" ofType:nil];
-        // 将字典数组转换为模型数组
-        self.emojiListView.emotions = [YJEmotion objectArrayWithKeyValuesArray:[NSArray arrayWithContentsOfFile:path]];
+        self.emojiListView.emotions = [YJEmotionTool emojiEmotions];
     }
     return _emojiListView;
 }
@@ -61,9 +57,7 @@
 {
     if (!_lxhListView) {
         self.lxhListView = [[YJEmotionListView alloc] init];
-        NSString *path = [[NSBundle mainBundle] pathForResource:@"EmotionIcons/lxh/info.plist" ofType:nil];
-        // 将字典数组转换为模型数组
-        self.lxhListView.emotions = [YJEmotion objectArrayWithKeyValuesArray:[NSArray arrayWithContentsOfFile:path]];
+        self.lxhListView.emotions = [YJEmotionTool lxhEmotions];
     }
     return _lxhListView;
 }
@@ -73,18 +67,27 @@
 {
     self = [super initWithFrame:frame];
     if (self) {
-        // 1.contentView
-//        UIView *contentView = [[UIView alloc] init];
-//        [self addSubview:contentView];
-//        self.contentView = contentView;
-        
         // 2.tabbar
         YJEmotionTabBar *tabBar = [[YJEmotionTabBar alloc]init];
         tabBar.delegate = self;
         [self addSubview: tabBar ];
         self.tabBar = tabBar;
+        
+        // 表情选中的通知
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(emotionDidSelect) name:YJEmotionDidSelectNotification object:nil];
     }
     return self;
+}
+
+// 解档沙盒数据
+- (void)emotionDidSelect
+{   // 点击表情按钮刷新 recentListView
+    self.recentListView.emotions = [YJEmotionTool recentEmotions];
+}
+
+- (void)dealloc
+{
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
 -(void)layoutSubviews

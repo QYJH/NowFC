@@ -64,19 +64,19 @@
     [self layoutSubviews];
     
 }
--(void )layoutSubviews
-{
-    [super layoutSubviews];
-    [self.label mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.top.equalTo(self.mas_top);
-        make.height.equalTo(@35);
-        make.centerX.equalTo (self.mas_centerX);
-    }];
-    
-    [self.Activity mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.left.equalTo(self.label.mas_right);
-        make.top.equalTo(self.label.mas_top).offset(5);
-    }];
-    
-}
+//-(void )layoutSubviews∫
+//{
+//    [super layoutSubviews];
+//    [self.label mas_makeConstraints:^(MASConstraintMaker *make) {
+//        make.top.equalTo(self.mas_top);
+//        make.height.equalTo(@35);
+//        make.centerX.equalTo (self.mas_centerX);
+//    }];
+//    
+//    [self.Activity mas_makeConstraints:^(MASConstraintMaker *make) {
+//        make.left.equalTo(self.label.mas_right);
+//        make.top.equalTo(self.label.mas_top).offset(5);
+//    }];
+//    
+//}
 @end

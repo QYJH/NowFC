@@ -9,5 +9,8 @@
 #import <UIKit/UIKit.h>
 
 @interface YJHomeViewController : UITableViewController
-
+/**
+ *  刷新
+ */
+- (void)refresh:(BOOL)fromSelf;
 @end

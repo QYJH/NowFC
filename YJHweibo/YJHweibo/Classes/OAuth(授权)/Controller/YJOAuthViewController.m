@@ -14,6 +14,7 @@
 #import "YJOAuthViewController.h"
 #import "MBProgressHUD+MJ.h"
 #import "YJAccountTool.h"
+#import "YJHttpTool.h"
 @interface YJOAuthViewController () <UIWebViewDelegate>
 
 @end
@@ -29,7 +30,8 @@
     [self.view addSubview:Webview];
     
     // 加载新浪登录页面
-    NSURL *url = [NSURL URLWithString:@"https://api.weibo.com/oauth2/authorize?client_id=3346461650&redirect_uri=http://baidu.com"];
+    NSString *UrlStr = [NSString stringWithFormat:@"https://api.weibo.com/oauth2/authorize?client_id=%@&redirect_uri=%@",YJAppKey,YJRedirectURI];
+    NSURL *url = [NSURL URLWithString:UrlStr];
     NSURLRequest *request = [NSURLRequest requestWithURL:url];
     [Webview loadRequest:request];
 
@@ -74,31 +76,38 @@
     return YES;
 }
 
+// GET:
+//-(void)reques{
+//   [YJHttpTool get:<#(NSString *)#> params:<#(NSDictionary *)#> success:<#^(id json)success#> failure:<#^(NSError *error)failure#>
+//}
+
 -(void)accessTokeWith:(NSString *)code
 {
     NSString *url = @"https://api.weibo.com/oauth2/access_token";
     NSMutableDictionary *ditc = [NSMutableDictionary dictionary];
-    ditc[@"client_id"] = @"3346461650";
-    ditc[@"client_secret"] = @"4a569d4cab9053d194429604dc524d19";
+    ditc[@"client_id"] = YJAppKey;
+    ditc[@"client_secret"] = YJAppSecret;
     ditc[@"grant_type"] = @"authorization_code";
-    ditc[@"redirect_uri"] = @"http://baidu.com";
+    ditc[@"redirect_uri"] = YJRedirectURI;
     ditc[@"code"] = code;
     
-    AFHTTPRequestOperationManager *mager = [AFHTTPRequestOperationManager manager];
-    [mager POST:url parameters:ditc success:^(AFHTTPRequestOperation *operation,  NSDictionary *responseObject) {
-        NSLog(@"responseObject =%@",responseObject);
+    // POST
+    [YJHttpTool post:url params:ditc success:^(id json) {
+        YJLog(@"json =%@",json);
         [MBProgressHUD hideHUD];
-
+        
         // 将返回账号的字典数据--->转成模型 --->再存进沙盒
-        YJAccount *account = [YJAccount accountWithDict:responseObject];
+        YJAccount *account = [YJAccount accountWithDict:json];
         // 存储账号信息到沙盒
         [YJAccountTool saveAccount:account];
-#pragma mark 切换窗口根控制器
+        
+    #pragma mark 切换窗口根控制器
         UIWindow *window = [UIApplication sharedApplication].keyWindow;
         [window switchRootViewController];
         
-    } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-        NSLog(@"error =%@",error);
+    } failure:^(NSError *error) {
+        
+        YJLog(@"error =%@",error);
         [MBProgressHUD hideHUD];
     }];
 }

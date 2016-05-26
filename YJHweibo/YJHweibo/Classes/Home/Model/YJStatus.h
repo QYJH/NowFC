@@ -16,6 +16,8 @@
 @property(nonatomic,copy) NSString *idstr;
 // 微博内容
 @property(nonatomic,copy) NSString *text;
+/**	string	微博信息内容 -- 带有属性的(特殊文字会高亮显示\显示表情)*/
+@property (nonatomic, copy) NSAttributedString *attributedText;
 // 作者信息字段
 @property(nonatomic,strong) YJUser *user;
 // 微博时间
@@ -28,7 +30,8 @@
 
 /** 被转发的原微博信息字段，当该微博为转发微博时返回 */
 @property (nonatomic, strong) YJStatus *retweeted_status;
-
+/**	被转发的原微博信息内容 -- 带有属性的(特殊文字会高亮显示\显示表情)*/
+@property (nonatomic, copy) NSAttributedString *retweetedAttributedText;
 
 /**	int	转发数*/
 @property (nonatomic, assign) int reposts_count;

@@ -17,13 +17,15 @@
 #import "UIView+Extension.h"
 #import "UIBarButtonItem+Extension.h"
 #import "UIWindow+Extension.h"
-#import "Masonry.h"
 #import "AFNetworking.h"
 #import "YJAccountTool.h"
 #import "UIImage+Extension.h"
 #import "NSString+Emoji.h"
 #import "NSString+Extension.h"
 #import "UITextView+Extension.h"
+#import "YJConst.h"
+
+
 
 #ifdef DEBUG // 处于开发阶段
 #define YJLog(...) NSLog(__VA_ARGS__)
@@ -47,10 +49,5 @@
 // 导航栏标题的字体
 #define HMNavigationTitleFont [UIFont boldSystemFontOfSize:20]
 
-// 通知
-// 表情选中的通知
-#define YJEmotionDidSelectNotification @"YJEmotionDidSelectNotification"
-#define YJSelectEmotionKey @"YJSelectEmotionKey"
-// 删除文字的通知
-#define YJEmotionDidDeleteNotification @"YJEmotionDidDeleteNotification"
+
 #endif /* pchFiles_pch */

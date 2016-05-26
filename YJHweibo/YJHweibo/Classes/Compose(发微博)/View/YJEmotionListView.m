@@ -51,8 +51,13 @@
 
 // 根据emotions，创建对应个数的表情
 - (void)setEmotions:(NSArray *)emotions{
-    YJLog(@"表情数量 = %ld",emotions.count);
+    YJLog(@"表情数量 = %ld",(unsigned long)emotions.count);
     _emotions = emotions;
+    
+#warning 点击表情按钮进入这里让 (<最近>的recentListView) 重新计算==刷新!
+    // 删除之前的控件,
+    [self.scrollView.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
+    YJLog(@"count =   %ld",(unsigned long)self.scrollView.subviews.count);
     
     NSUInteger count = (emotions.count + YJEmotionPageSize - 1) / YJEmotionPageSize;
     // 1.设置页数
@@ -77,6 +82,7 @@
         
         [self.scrollView addSubview:pageView];
     }
+    [self setNeedsLayout];
 }
 
 - (void)layoutSubviews

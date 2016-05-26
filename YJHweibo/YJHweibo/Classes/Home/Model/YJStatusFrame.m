@@ -62,7 +62,8 @@
     // 取头像或时间的最大数
     CGFloat contenY = MAX(CGRectGetMaxY(self.iconViewF),CGRectGetMaxY(self.timeLabelF)) + YJStatusCellBorderW;
     CGFloat maxW = cellW - 2 * contenX;
-    CGSize  contenSize = [status.text sizeWithFont:YJStatusCellContentFont maxW:maxW];
+    // 计算文字大小
+    CGSize  contenSize = [status.attributedText boundingRectWithSize:CGSizeMake(maxW, MAXFLOAT) options:NSStringDrawingUsesLineFragmentOrigin context:nil].size;
     self.contentLabelF = (CGRect){{contenX,contenY},contenSize};
     
     
@@ -90,13 +91,11 @@
     /* 被转发微博 */
     if (status.retweeted_status) {
         YJStatus *retweeted_status = status.retweeted_status;
-        YJUser *retweeted_status_user = retweeted_status.user;
         
         /** 被转发微博正文 */
         CGFloat retweetContentX = YJStatusCellBorderW;
         CGFloat retweetContentY = YJStatusCellBorderW;
-        NSString *retweetContent = [NSString stringWithFormat:@"@%@ : %@", retweeted_status_user.name, retweeted_status.text];
-        CGSize retweetContentSize = [retweetContent sizeWithFont:YJStatusCellRetweetContentFont maxW:maxW];
+        CGSize retweetContentSize = [status.retweetedAttributedText boundingRectWithSize:CGSizeMake(maxW, MAXFLOAT) options:NSStringDrawingUsesLineFragmentOrigin context:nil].size;
         self.retweetContentLabelF = (CGRect){{retweetContentX, retweetContentY}, retweetContentSize};
         
         /** 被转发微博配图 */
